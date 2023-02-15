@@ -1,0 +1,23 @@
+Jan 24 19:33:56 gaia1 sshd[19324]: Accepted password for dafonte from 10.68.96.174 port 53131 ssh2
+Jan 29 23:59:43 gaia1 sshd[11497]: Failed password for invalid user jeff from 165.232.159.218 port 35754 ssh2
+Jan 25 09:52:00 gaia1 sshd[28853]: Accepted password for lara from 10.68.96.150 port 63016 ssh2
+Jan 29 23:55:36 gaia1 sshd[11461]: Invalid user raspberry from 103.50.5.242 port 33262
+Jan 29 23:56:41 gaia1 sshd[11470]: Invalid user test from 103.50.5.242 port 45392
+Jan 29 23:57:06 gaia1 sshd[11474]: Invalid user user from 165.232.159.218 port 52424
+Jan 23 01:35:45 gaia1 sshd[7166]: Received disconnect from 10.68.96.93 port 53469:11: Bye Bye [preauth]
+Jan 23 01:35:45 gaia1 sshd[7166]: Disconnected from invalid user db2fenc1 10.68.96.93 port 53469 [preauth]
+Jan 23 01:35:45 gaia1 sshd[7157]: Received disconnect from 10.68.96.93 port 56029:11: Bye Bye [preauth]
+Jan 23 01:35:45 gaia1 sshd[7157]: Disconnected from invalid user htinit 10.68.96.93 port 56029 [preauth]
+Jan 25 10:49:41 gaia1 sshd[29777]: Accepted password for lara from 10.68.96.150 port 55254 ssh2
+Jan 29 23:57:09 gaia1 sshd[11474]: Failed password for invalid user user from 165.232.159.218 port 52424 ssh2
+Jan 29 23:57:18 gaia1 sshd[11476]: Failed password for root from 164.52.88.3 port 40190 ssh2
+Jan 25 13:10:14 gaia1 sshd[10777]: Accepted password for marco from 10.68.96.142 port 46470 ssh2
+Jan 25 13:12:28 gaia1 sshd[11116]: Accepted password for marco from 10.68.96.142 port 46484 ssh2
+Jan 25 16:22:10 gaia1 sshd[26110]: Accepted password for gtorralba from 10.68.96.144 port 37036 ssh2
+Jan 29 23:59:41 gaia1 sshd[11497]: Invalid user jeff from 165.232.159.218 port 35754
+Jan 23 01:35:46 gaia1 sshd[7176]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=10.68.96.93 
+Jan 23 01:35:46 gaia1 sshd[7178]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=10.68.96.93  user=admin
+Jan 29 23:59:59 gaia1 sshd[11501]: Invalid user user from 103.50.5.242 port 53580
+Jan 25 16:27:22 gaia1 sshd[26541]: Accepted password for gtorralba from 10.68.96.144 port 37038 ssh2
+Jan 29 23:56:58 gaia1 sshd[11472]: Failed password for root from 98.29.20.247 port 59976 ssh2
+Jan 29 23:57:47 gaia1 sshd[11480]: Failed password for root from 98.29.20.247 port 38253 ssh2
