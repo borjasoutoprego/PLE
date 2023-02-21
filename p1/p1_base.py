@@ -11,27 +11,23 @@ class LogLexer(Lexer):
     Lexer base que debéis completar
     '''
 
-    tokens = {FECHA, NOMBRE, SERVICIO, MENSAJE}
+    tokens = {MES, DIA, HORA, NOMBRE, SERVICIO, MENSAJE, OTHERS}
+    ignore = ' \t:'
 
-    FECHA = r'[a-zA-Z]+[ |\t][0-9]+[ |\t][0-9:]+' ## revisar espacios en blanco --> \s 
-    NOMBRE = r'[a-zA-Z0-9]+'
+    MENSAJE = r'Accepted\spassword\sfor|Failed\spassword\sfor\sinvalid\suser|Invalid\suser|Failed\spassword\sfor|.+' # gestionar demas tipos de eventos
+    MES = r'[A-Z][a-z]{2}'
+    HORA = r'[0-9]+[:][0-9]+[:][0-9]+'
+    DIA = r'[0-9][0-9]'
     SERVICIO = r'sshd\[[0-9]+\]'
-    MENSAJE = r'Accepted password for|Failed password for|Invalid user|Failed password for invalid user' # gestionar demas tipos de eventos
-    # añadir mas tokens para el resto de campos del mensaje
+    NOMBRE = r'[a-zA-Z0-9]+'
+    # OTHERS = r'.+'
 
-    ##################
-    # ¿¿¿¿¿Será util análisis lexico condicional para gestionar todas las partes del mensaje????????????????
-    ##################
-
-
-    ignore = r': ' # que ignore los dos puntos del campo ssh
-    ignore_space = r' '
     ignore_newline = r'\r?\n'
 
     def __init__(self):
-        self.contador = 1 # inicializado a 1 porque el nº de eventos es igual al nº de saltos de linea + 1
+        self.contador = 1 
 
-    def ignore_newline(self, t): # se puede utilizar para contador del numero total de eventos? sumando 1 al final porque hay un salto de linea menos que numero de eventos
+    def ignore_newline(self, t): 
         self.contador += 1
 
     def print_output(self):
@@ -47,7 +43,7 @@ class LogLexer(Lexer):
 # No debéis modificar el comportamiento de esta sección
 if __name__ == '__main__':
 
-    # Inicializa el Lexer principal.
+    """ # Inicializa el Lexer principal.
     lexer = LogLexer()
 
     # Lee íntegramente el fichero proporcionado por entrada estándar
@@ -60,4 +56,17 @@ if __name__ == '__main__':
     # Procesa los tokens (análisis léxico) y e invoca la función que muestra la salida
     if text:
         list(lexer.tokenize(text, lineno=0))
-        lexer.print_output()
+        lexer.print_output() """
+
+    
+    lexer = LogLexer()
+
+    while True:
+        try:
+            text = input(' > ')
+        except EOFError:
+            break
+        if text:
+            tokens = list(lexer.tokenize(text))
+            for t in tokens:
+                print(t)
