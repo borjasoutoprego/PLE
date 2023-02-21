@@ -11,24 +11,30 @@ class LogLexer(Lexer):
     Lexer base que debéis completar
     '''
 
-    tokens = {MES, DIA, HORA, NOMBRE, SERVICIO, MENSAJE, OTHERS}
+    tokens = {MONTH, DAY, HOUR, NAME, SERVICE, MESSAGE, OTHERS}
     ignore = ' \t:'
 
-    MENSAJE = r'Accepted\spassword\sfor|Failed\spassword\sfor\sinvalid\suser|Invalid\suser|Failed\spassword\sfor|.+' # gestionar demas tipos de eventos
-    MES = r'[A-Z][a-z]{2}'
-    HORA = r'[0-9]+[:][0-9]+[:][0-9]+'
-    DIA = r'[0-9][0-9]'
-    SERVICIO = r'sshd\[[0-9]+\]'
-    NOMBRE = r'[a-zA-Z0-9]+'
-    # OTHERS = r'.+'
+    MESSAGE = r'Accepted\spassword\sfor|Failed\spassword\sfor\sinvalid\suser|Invalid\suser|Failed\spassword\sfor' 
+    MONTH = r'[A-Z][a-z]{2}'
+    HOUR = r'[0-9]+[:][0-9]+[:][0-9]+'
+    DAY = r'[0-9]{1,2}'
+    SERVICE = r'sshd\[[0-9]+\]'
+    NAME = r'[a-zA-Z0-9]+'
+    OTHERS = r'.+'
 
     ignore_newline = r'\r?\n'
 
     def __init__(self):
-        self.contador = 1 
+        self.counter = 1 
 
     def ignore_newline(self, t): 
-        self.contador += 1
+        self.counter += 1
+
+    def MONTH(self, t):
+        pass
+
+    def DAY(self, t):
+        pass
 
     def print_output(self):
         '''
@@ -37,13 +43,16 @@ class LogLexer(Lexer):
         contadores indicados en el enunciado según el formato especificado.
         '''
 
-        print('#contadores_generales\ntotal_eventos,'f'{self.contador}')
+        print('#contadores_generales\ntotal_eventos,'f'{self.counter}')
+
+#class MessageLexer(Lexer):
+    #tokens = {MESSAGE, USER, IP, PORT}
 
 
 # No debéis modificar el comportamiento de esta sección
 if __name__ == '__main__':
 
-    """ # Inicializa el Lexer principal.
+    # Inicializa el Lexer principal.
     lexer = LogLexer()
 
     # Lee íntegramente el fichero proporcionado por entrada estándar
@@ -56,10 +65,10 @@ if __name__ == '__main__':
     # Procesa los tokens (análisis léxico) y e invoca la función que muestra la salida
     if text:
         list(lexer.tokenize(text, lineno=0))
-        lexer.print_output() """
+        lexer.print_output()
 
     
-    lexer = LogLexer()
+    """ lexer = LogLexer()
 
     while True:
         try:
@@ -70,3 +79,4 @@ if __name__ == '__main__':
             tokens = list(lexer.tokenize(text))
             for t in tokens:
                 print(t)
+ """
