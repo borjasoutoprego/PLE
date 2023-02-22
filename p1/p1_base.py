@@ -38,8 +38,10 @@ class LogLexer(Lexer):
         self.failed = 0
         self.invalid = 0
         self.tem_msg = ''
+        self.dictMachine = dict()
         self.dictIP = dict()
         self.dictUser = dict()
+        self.dictClass = dict()
 
     def ignore_newline(self, t): 
         self.counter += 1
@@ -93,6 +95,7 @@ class MessageLexer(Lexer):
     USER = r'[a-zA-Z0-9]+'
 
     def MESSAGE(self, t):
+        # Total de mensajes identificados
         if t.value == 'Accepted password for':
             self.acc += 1 
             self.temp_msg = 'acc'
@@ -104,11 +107,42 @@ class MessageLexer(Lexer):
             self.temp_msg = 'invalid'
 
     def IP(self, t):
+        # Número de eventos por máquina (total)
+        k = str(t.value)
+        if key not in self.dictMachine:
+            self.dictMachine[k] = 1
+        else:
+            self.dictMachine[k] += 1
+
+        # Número de eventos por máquina según mensaje
         key = self.temp_msg + str(t.value)
         if key not in self.dictIP:
             self.dictIP[key] = 1
         else:
             self.dictIP[key] += 1
+
+        # Contadores según tipo de IP
+        typeIP = int(str(t.value[0]) + str(t.value[1]) + str(t.value[2]))
+        if typeIP < 128: # tipo A
+            if str(t.value[0]) + str(t.value[1]) + str(t.value[2]) == '10.':
+                key1 = self.temp_msg + 'A' + 'private'
+            else:
+                key1 = self.temp_msg + 'A' + 'public'
+        elif 127 < typeIP < 192: # tipo B
+            if int(str(t.value[0]) + str(t.value[1]) + str(t.value[2])) == 172 and 15 < int(str(t.value[4]) + str(t.value[5])) < 32:
+                key1 = self.temp_msg + 'B' + 'private'
+            else:
+                key1 = self.temp_msg + 'B' + 'public'
+        else: # tipo C
+            if int(str(t.value[0]) + str(t.value[1]) + str(t.value[2])) == 192 and int(str(t.value[4]) + str(t.value[5]) + str(t.value[6])) == 168:
+                key1 = self.temp_msg + 'C' + 'private'
+            else:
+                key1 = self.temp_msg + 'C' + 'public'
+
+        if key1 not in self.dictClass:
+            self.dictClass[key1] = 1
+        else:
+            self.dictClass[key1] += 1
 
         self.begin(LogLexer)
 
