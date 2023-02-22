@@ -14,7 +14,9 @@ class LogLexer(Lexer):
     tokens = {MONTH, DAY, HOUR, NAME, SERVICE, MESSAGE, OTHERS}
     ignore = ' \t:'
 
-    MESSAGE = r'Accepted\spassword\sfor|Failed\spassword\sfor\sinvalid\suser|Invalid\suser|Failed\spassword\sfor' 
+    # tokens separados para clase de IP
+
+    MESSAGE = r'Accepted\spassword\sfor|Failed\spassword\sfor\sinvalid\suser|Invalid\suser|Failed\spassword\sfor'  # e la clase secundaria
     MONTH = r'[A-Z][a-z]{2}'
     HOUR = r'[0-9]+[:][0-9]+[:][0-9]+'
     DAY = r'[0-9]{1,2}'
@@ -25,16 +27,28 @@ class LogLexer(Lexer):
     ignore_newline = r'\r?\n'
 
     def __init__(self):
-        self.counter = 1 
+        self.counter = 1
+        self.dictDate = dict()
+        self.month = ''
+        self.half = ''
 
     def ignore_newline(self, t): 
         self.counter += 1
 
     def MONTH(self, t):
-        pass
-
+        self.month = t.value #'Jan'
+    
     def DAY(self, t):
-        pass
+        if int(t.value) < 16:
+            self.half = '1'
+        else:
+            self.half = '2'
+        key = self.month + self.half
+        if key not in self.dictDate:
+            self.dictDate[key] = 1
+        else:
+            self.dictDate[key] += 1
+
 
     def print_output(self):
         '''
@@ -44,6 +58,8 @@ class LogLexer(Lexer):
         '''
 
         print('#contadores_generales\ntotal_eventos,'f'{self.counter}')
+        for keys, values in self.dictDate.items():
+            print(keys, values)
 
 #class MessageLexer(Lexer):
     #tokens = {MESSAGE, USER, IP, PORT}
@@ -68,7 +84,7 @@ if __name__ == '__main__':
         lexer.print_output()
 
     
-    """ lexer = LogLexer()
+"""     lexer = LogLexer()
 
     while True:
         try:
@@ -78,5 +94,4 @@ if __name__ == '__main__':
         if text:
             tokens = list(lexer.tokenize(text))
             for t in tokens:
-                print(t)
- """
+                print(t) """
