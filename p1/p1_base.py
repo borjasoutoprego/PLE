@@ -11,17 +11,18 @@ class LogLexer(Lexer):
     Lexer base que debéis completar
     '''
 
-    tokens = {MONTH, DAY, HOUR, NAME, SERVICE, MESSAGE}
-    ignore = ' \t:'
+    tokens = {MONTH, DAY, HOUR, NAME, SERVICE, REM}
+    ignore = ' \t'
 
     # tokens separados para clase de IP
 
-    MESSAGE = r'Accepted\spassword\sfor|Failed\spassword\sfor\sinvalid\suser|Invalid\suser|Failed\spassword\sfor'  # e la clase secundaria
     MONTH = r'[A-Z][a-z]{2}'
     HOUR = r'[0-9]+[:][0-9]+[:][0-9]+'
     DAY = r'[0-9]{1,2}'
     SERVICE = r'sshd\[[0-9]+\]'
     NAME = r'[a-zA-Z0-9]+'
+    #OTHERS = r''
+    REM = r':\s.+'
 
     ignore_newline = r'\r?\n'
 
@@ -33,13 +34,19 @@ class LogLexer(Lexer):
         self.morning = 0
         self.aft = 0
         self.night = 0
+        self.acc = 0
+        self.failed = 0
+        self.invalid = 0
+        self.tem_msg = ''
+        self.dictIP = dict()
+        self.dictUser = dict()
 
     def ignore_newline(self, t): 
         self.counter += 1
 
     def MONTH(self, t):
         self.month = t.value 
-    
+
     def DAY(self, t):
         if int(t.value) < 16:
             self.half = '1'
@@ -62,6 +69,9 @@ class LogLexer(Lexer):
         else:
             self.night += 1
 
+    def REM(self, t):
+        self.begin(MessageLexer)
+
     def print_output(self):
         '''
         Función encargada de mostrar el resultado final tras realizar el análisis léxico.
@@ -75,8 +85,39 @@ class LogLexer(Lexer):
         print('#eventos_por_hora\nmanana,'f'{self.morning}','\ntarde,',f'{self.aft}','\nnoche,'f'{self.night}')
 
 class MessageLexer(Lexer):
-    tokens = {MESSAGE, USER, IP, PORT}
+    tokens = {MESSAGE, USER, IP}
+    ignore = r' \t:'
 
+    MESSAGE = r'Accepted\spassword\sfor|Failed\spassword\sfor\sinvalid\suser|Invalid\suser|Failed\spassword\sfor'  # e la clase secundaria
+    IP = r'[0-9]+[\.][0-9]+[\.][0-9]+[\.][0-9]+'
+    USER = r'[a-zA-Z0-9]+'
+
+    def MESSAGE(self, t):
+        if t.value == 'Accepted password for':
+            self.acc += 1 
+            self.temp_msg = 'acc'
+        elif t.value == 'Failed password for':
+            self.failed += 1
+            self.temp_msg = 'failed'
+        else:
+            self.invalid += 1
+            self.temp_msg = 'invalid'
+
+    def IP(self, t):
+        key = self.temp_msg + str(t.value)
+        if key not in self.dictIP:
+            self.dictIP[key] = 1
+        else:
+            self.dictIP[key] += 1
+
+        self.begin(LogLexer)
+
+    def USER(self, t):
+        key = self.temp_msg + str(t.value)
+        if key not in self.dictUser:
+            self.dictUser[key] = 1
+        else:
+            self.dictUser[key] += 1
 
 # No debéis modificar el comportamiento de esta sección
 if __name__ == '__main__':
@@ -97,7 +138,7 @@ if __name__ == '__main__':
         lexer.print_output()
 
     
-"""     lexer = LogLexer()
+    """ lexer = LogLexer()
 
     while True:
         try:
