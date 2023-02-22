@@ -11,7 +11,7 @@ class LogLexer(Lexer):
     Lexer base que debéis completar
     '''
 
-    tokens = {MONTH, DAY, HOUR, NAME, SERVICE, MESSAGE, OTHERS}
+    tokens = {MONTH, DAY, HOUR, NAME, SERVICE, MESSAGE}
     ignore = ' \t:'
 
     # tokens separados para clase de IP
@@ -22,7 +22,6 @@ class LogLexer(Lexer):
     DAY = r'[0-9]{1,2}'
     SERVICE = r'sshd\[[0-9]+\]'
     NAME = r'[a-zA-Z0-9]+'
-    OTHERS = r'.+'
 
     ignore_newline = r'\r?\n'
 
@@ -31,24 +30,37 @@ class LogLexer(Lexer):
         self.dictDate = dict()
         self.month = ''
         self.half = ''
+        self.morning = 0
+        self.aft = 0
+        self.night = 0
 
     def ignore_newline(self, t): 
         self.counter += 1
 
     def MONTH(self, t):
-        self.month = t.value #'Jan'
+        self.month = t.value 
     
     def DAY(self, t):
         if int(t.value) < 16:
             self.half = '1'
         else:
             self.half = '2'
+
         key = self.month + self.half
+
         if key not in self.dictDate:
             self.dictDate[key] = 1
         else:
             self.dictDate[key] += 1
 
+    def HOUR(self, t):
+        hour = int(str(t.value[0]) + str(t.value[1]))
+        if 8 <= hour < 16:
+            self.morning += 1
+        elif 16 <= hour < 24:
+            self.aft += 1
+        else:
+            self.night += 1
 
     def print_output(self):
         '''
@@ -60,9 +72,10 @@ class LogLexer(Lexer):
         print('#contadores_generales\ntotal_eventos,'f'{self.counter}')
         for keys, values in self.dictDate.items():
             print(keys, values)
+        print('#eventos_por_hora\nmanana,'f'{self.morning}','\ntarde,',f'{self.aft}','\nnoche,'f'{self.night}')
 
-#class MessageLexer(Lexer):
-    #tokens = {MESSAGE, USER, IP, PORT}
+class MessageLexer(Lexer):
+    tokens = {MESSAGE, USER, IP, PORT}
 
 
 # No debéis modificar el comportamiento de esta sección
