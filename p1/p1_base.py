@@ -85,10 +85,24 @@ class LogLexer(Lexer):
         contadores indicados en el enunciado según el formato especificado.
         '''
 
-        print('#contadores_generales\ntotal_eventos,'f'{self.counter}')
+        print('#contadores_generales\ntotal_eventos,'f'{self.counter}','\ntotal_aceptados,'f'{self.acc}','\ntotal_fallidos,'f'{self.failed}','\ntotal_no_autorizados,',f'{self.invalid}', '\ntotal_otros,'f'{self.others}')
+        print('#eventos_por_fecha')
         for keys, values in self.dictDate.items():
             print(keys, values)
         print('#eventos_por_hora\nmanana,'f'{self.morning}','\ntarde,',f'{self.aft}','\nnoche,'f'{self.night}')
+        print('#eventos_por_maquina')
+        for keys, values in self.dictMachine.items():
+            print(keys, values)
+        print('#eventos_por_maquina segun mensaje ######')
+        for keys, values in self.dictIP.items():
+            print(keys, values)
+        print('#eventos por usuario segun mensaje ######')
+        for keys, values in self.dictUser.items():
+            print(keys, values)
+        print('#eventos_por_ip segun mensaje ######')
+        for keys, values in self.dictClass.items():
+            print(keys, values)
+        
 
 class MessageLexer(Lexer):
     tokens = {MESSAGE, OTHERS, USER, IP, END}
