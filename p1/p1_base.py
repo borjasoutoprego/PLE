@@ -11,8 +11,8 @@ class LogLexer(Lexer):
     Lexer base que debéis completar
     '''
 
-    tokens = {MONTH, DAY, HOUR, NAME, SERVICE, REM}
-    ignore = ' \t'
+    tokens = {MONTH, DAY, HOUR, NAME, SERVICE}
+    ignore = ' \t:'
 
     # tokens separados para clase de IP
 
@@ -21,10 +21,6 @@ class LogLexer(Lexer):
     DAY = r'[0-9]{1,2}'
     SERVICE = r'sshd\[[0-9]+\]'
     NAME = r'[a-zA-Z0-9]+'
-    #OTHERS = r''
-    REM = r':\s.+'
-
-    ignore_newline = r'\r?\n'
 
     def __init__(self):
         self.counter = 1
@@ -37,17 +33,16 @@ class LogLexer(Lexer):
         self.acc = 0
         self.failed = 0
         self.invalid = 0
-        self.tem_msg = ''
+        self.temp_msg = ''
         self.dictMachine = dict()
         self.dictIP = dict()
         self.dictUser = dict()
         self.dictClass = dict()
-
-    def ignore_newline(self, t): 
-        self.counter += 1
+        self.others = 0
 
     def MONTH(self, t):
         self.month = t.value 
+        return t 
 
     def DAY(self, t):
         if int(t.value) < 16:
@@ -62,6 +57,8 @@ class LogLexer(Lexer):
         else:
             self.dictDate[key] += 1
 
+        return t
+
     def HOUR(self, t):
         hour = int(str(t.value[0]) + str(t.value[1]))
         if 8 <= hour < 16:
@@ -70,29 +67,42 @@ class LogLexer(Lexer):
             self.aft += 1
         else:
             self.night += 1
+        return t
 
-    def REM(self, t):
+    def SERVICE(self, t):
         self.begin(MessageLexer)
 
-    def print_output(self):
-        '''
-        Función encargada de mostrar el resultado final tras realizar el análisis léxico.
-        Debéis implementarla como consideréis oportuno, mostrando por salida estándar los
-        contadores indicados en el enunciado según el formato especificado.
-        '''
+    # def print_output(self):
+    #     '''
+    #     Función encargada de mostrar el resultado final tras realizar el análisis léxico.
+    #     Debéis implementarla como consideréis oportuno, mostrando por salida estándar los
+    #     contadores indicados en el enunciado según el formato especificado.
+    #     '''
 
-        print('#contadores_generales\ntotal_eventos,'f'{self.counter}')
-        for keys, values in self.dictDate.items():
-            print(keys, values)
-        print('#eventos_por_hora\nmanana,'f'{self.morning}','\ntarde,',f'{self.aft}','\nnoche,'f'{self.night}')
+    #     print('#contadores_generales\ntotal_eventos,'f'{self.counter}')
+    #     for keys, values in self.dictDate.items():
+    #         print(keys, values)
+    #     print('#eventos_por_hora\nmanana,'f'{self.morning}','\ntarde,',f'{self.aft}','\nnoche,'f'{self.night}')
+    #     print(self.dictMachine)
+    #     print(self.dictIP)
+    #     print(self.dictClass)
 
 class MessageLexer(Lexer):
-    tokens = {MESSAGE, USER, IP}
-    ignore = r' \t:'
+    tokens = {MESSAGE, OTHERS, USER, IP, END}
+    ignore = r' \t:\[\]'
 
-    MESSAGE = r'Accepted\spassword\sfor|Failed\spassword\sfor\sinvalid\suser|Invalid\suser|Failed\spassword\sfor'  # e la clase secundaria
-    IP = r'[0-9]+[\.][0-9]+[\.][0-9]+[\.][0-9]+'
+    MESSAGE = r'Accepted\spassword\sfor|Failed\spassword\sfor\sinvalid\suser|Invalid\suser|Failed\spassword\sfor'  
+    OTHERS = r'Dis.+|Rec.+|pam.+|error.+'
+    # IP = r'[0-9]+[\.][0-9]+[\.][0-9]+[\.][0-9]+'
+    IP = r'((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
     USER = r'[a-zA-Z0-9]+'
+    END =   r'port.+'
+
+    ignore_newline = r'\r?\n'
+
+    def ignore_newline(self, t):
+        self.counter += 1
+        self.begin(LogLexer)
 
     def MESSAGE(self, t):
         # Total de mensajes identificados
@@ -106,10 +116,16 @@ class MessageLexer(Lexer):
             self.invalid += 1
             self.temp_msg = 'invalid'
 
+        return t 
+
+    def OTHERS(self, t):
+        self.others += 1
+        return t
+
     def IP(self, t):
         # Número de eventos por máquina (total)
         k = str(t.value)
-        if key not in self.dictMachine:
+        if k not in self.dictMachine:
             self.dictMachine[k] = 1
         else:
             self.dictMachine[k] += 1
@@ -122,7 +138,11 @@ class MessageLexer(Lexer):
             self.dictIP[key] += 1
 
         # Contadores según tipo de IP
-        typeIP = int(str(t.value[0]) + str(t.value[1]) + str(t.value[2]))
+        if t.value[2] == '.':
+            typeIP = int(str(t.value[0]) + str(t.value[1]))
+        else:
+            typeIP = int(str(t.value[0]) + str(t.value[1]) + str(t.value[2]))
+
         if typeIP < 128: # tipo A
             if str(t.value[0]) + str(t.value[1]) + str(t.value[2]) == '10.':
                 key1 = self.temp_msg + 'A' + 'private'
@@ -144,7 +164,7 @@ class MessageLexer(Lexer):
         else:
             self.dictClass[key1] += 1
 
-        self.begin(LogLexer)
+        return t
 
     def USER(self, t):
         key = self.temp_msg + str(t.value)
@@ -152,6 +172,24 @@ class MessageLexer(Lexer):
             self.dictUser[key] = 1
         else:
             self.dictUser[key] += 1
+
+        return t 
+
+
+    def print_output(self):
+        '''
+        Función encargada de mostrar el resultado final tras realizar el análisis léxico.
+        Debéis implementarla como consideréis oportuno, mostrando por salida estándar los
+        contadores indicados en el enunciado según el formato especificado.
+        '''
+
+        print('#contadores_generales\ntotal_eventos,'f'{self.counter}')
+        for keys, values in self.dictDate.items():
+            print(keys, values)
+        print('#eventos_por_hora\nmanana,'f'{self.morning}','\ntarde,',f'{self.aft}','\nnoche,'f'{self.night}')
+        print(self.dictMachine)
+        print(self.dictIP)
+        print(self.dictClass)
 
 # No debéis modificar el comportamiento de esta sección
 if __name__ == '__main__':
