@@ -1,3 +1,6 @@
+"""
+@author: Nina López Laudenbach (nina.laudenbach), Borja Souto Prego (borja.souto)
+"""
 import sys
 
 from sly import Lexer
@@ -22,8 +25,10 @@ class LogLexer(Lexer):
     SERVICE = r'sshd\[[0-9]+\]'
     NAME = r'[a-zA-Z0-9]+'
 
+    ignore_newline = r'\r?\n'
+
     def __init__(self):
-        self.counter = 1
+        self.counter = 0
         self.dictDate = dict()
         self.month = ''
         self.half = ''
@@ -42,6 +47,7 @@ class LogLexer(Lexer):
 
     def MONTH(self, t):
         self.month = t.value 
+        self.counter += 1
         return t 
 
     def DAY(self, t):
@@ -72,36 +78,32 @@ class LogLexer(Lexer):
     def SERVICE(self, t):
         self.begin(MessageLexer)
 
-    # def print_output(self):
-    #     '''
-    #     Función encargada de mostrar el resultado final tras realizar el análisis léxico.
-    #     Debéis implementarla como consideréis oportuno, mostrando por salida estándar los
-    #     contadores indicados en el enunciado según el formato especificado.
-    #     '''
+    def print_output(self):
+        '''
+        Función encargada de mostrar el resultado final tras realizar el análisis léxico.
+        Debéis implementarla como consideréis oportuno, mostrando por salida estándar los
+        contadores indicados en el enunciado según el formato especificado.
+        '''
 
-    #     print('#contadores_generales\ntotal_eventos,'f'{self.counter}')
-    #     for keys, values in self.dictDate.items():
-    #         print(keys, values)
-    #     print('#eventos_por_hora\nmanana,'f'{self.morning}','\ntarde,',f'{self.aft}','\nnoche,'f'{self.night}')
-    #     print(self.dictMachine)
-    #     print(self.dictIP)
-    #     print(self.dictClass)
+        print('#contadores_generales\ntotal_eventos,'f'{self.counter}')
+        for keys, values in self.dictDate.items():
+            print(keys, values)
+        print('#eventos_por_hora\nmanana,'f'{self.morning}','\ntarde,',f'{self.aft}','\nnoche,'f'{self.night}')
 
 class MessageLexer(Lexer):
     tokens = {MESSAGE, OTHERS, USER, IP, END}
-    ignore = r' \t:\[\]'
+    ignore = r' \t:\[\];=\(\)><\.\,\*\@\+\#!\$\'\/\{\}~%^&`'
 
     MESSAGE = r'Accepted\spassword\sfor|Failed\spassword\sfor\sinvalid\suser|Invalid\suser|Failed\spassword\sfor'  
-    OTHERS = r'Dis.+|Rec.+|pam.+|error.+'
+    OTHERS = r'Dis.+|Rec.+|pam.+|error.+|Conn.+'
     # IP = r'[0-9]+[\.][0-9]+[\.][0-9]+[\.][0-9]+'
     IP = r'((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
-    USER = r'[a-zA-Z0-9]+'
+    USER = r'[a-zA-Z0-9\-\_]+'
     END =   r'port.+'
 
     ignore_newline = r'\r?\n'
 
     def ignore_newline(self, t):
-        self.counter += 1
         self.begin(LogLexer)
 
     def MESSAGE(self, t):
@@ -138,23 +140,39 @@ class MessageLexer(Lexer):
             self.dictIP[key] += 1
 
         # Contadores según tipo de IP
-        if t.value[2] == '.':
+        if t.value[1] == '.':
+            typeIP = int(str(t.value[0]))
+        elif t.value[2] == '.':
             typeIP = int(str(t.value[0]) + str(t.value[1]))
         else:
             typeIP = int(str(t.value[0]) + str(t.value[1]) + str(t.value[2]))
 
         if typeIP < 128: # tipo A
-            if str(t.value[0]) + str(t.value[1]) + str(t.value[2]) == '10.':
+            if typeIP == 10:
                 key1 = self.temp_msg + 'A' + 'private'
             else:
                 key1 = self.temp_msg + 'A' + 'public'
         elif 127 < typeIP < 192: # tipo B
-            if int(str(t.value[0]) + str(t.value[1]) + str(t.value[2])) == 172 and 15 < int(str(t.value[4]) + str(t.value[5])) < 32:
+            if t.value[5] == '.':
+                IP2 = int(str(t.value[4]))
+            elif t.value[6] == '.':
+                IP2 = int(str(t.value[4]) + str(t.value[5]))
+            else:
+                IP2 = int(str(t.value[4]) + str(t.value[5]) + str(t.value[6]))
+                
+            if typeIP == 172 and 15 < IP2 < 32:
                 key1 = self.temp_msg + 'B' + 'private'
             else:
                 key1 = self.temp_msg + 'B' + 'public'
         else: # tipo C
-            if int(str(t.value[0]) + str(t.value[1]) + str(t.value[2])) == 192 and int(str(t.value[4]) + str(t.value[5]) + str(t.value[6])) == 168:
+            if t.value[5] == '.':
+                IP2 = int(str(t.value[4]))
+            elif t.value[6] == '.':
+                IP2 = int(str(t.value[4]) + str(t.value[5]))
+            else:
+                IP2 = int(str(t.value[4]) + str(t.value[5]) + str(t.value[6])) 
+
+            if typeIP == 192 and IP2 == 168:
                 key1 = self.temp_msg + 'C' + 'private'
             else:
                 key1 = self.temp_msg + 'C' + 'public'
@@ -174,22 +192,6 @@ class MessageLexer(Lexer):
             self.dictUser[key] += 1
 
         return t 
-
-
-    def print_output(self):
-        '''
-        Función encargada de mostrar el resultado final tras realizar el análisis léxico.
-        Debéis implementarla como consideréis oportuno, mostrando por salida estándar los
-        contadores indicados en el enunciado según el formato especificado.
-        '''
-
-        print('#contadores_generales\ntotal_eventos,'f'{self.counter}')
-        for keys, values in self.dictDate.items():
-            print(keys, values)
-        print('#eventos_por_hora\nmanana,'f'{self.morning}','\ntarde,',f'{self.aft}','\nnoche,'f'{self.night}')
-        print(self.dictMachine)
-        print(self.dictIP)
-        print(self.dictClass)
 
 # No debéis modificar el comportamiento de esta sección
 if __name__ == '__main__':
