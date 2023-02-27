@@ -9,12 +9,18 @@ from sly import Lexer
 # Podéis implementar lexers adicionales si decidís realizar un análisis léxico condicional.
 
 def generateDict(dictName, key):
+    """
+    Genera diccionarios
+    """
     if key not in dictName:
         dictName[key] = 1
     else:
         dictName[key] += 1
 
 def printDict(dictName):
+    """
+    Imprime diccionarios
+    """
     for keys, values in dictName.items():
         print(keys, ',', values, sep='')
 
@@ -63,6 +69,7 @@ class LogLexer(Lexer):
 
     def MONTH(self, t):
         self.month = t.value 
+        # conteo de eventos total
         self.counter += 1
         return t 
 
@@ -170,6 +177,7 @@ class MessageLexer(Lexer):
             self.acc += 1 
             self.temp_msg = 'accepted'
 
+            # eventos aceptados por máquina
             key = self.temp_machine
             generateDict(self.dictAcc_Mach, key)
 
@@ -177,6 +185,7 @@ class MessageLexer(Lexer):
             self.failed += 1
             self.temp_msg = 'failed'
 
+            # eventos fallidos por maquina
             key = self.temp_machine
             generateDict(self.dictFailed_Mach, key)
             
@@ -184,12 +193,14 @@ class MessageLexer(Lexer):
             self.invalid += 1
             self.temp_msg = 'invalid'
 
+            # eventos no autorizados por máquina
             key = self.temp_machine
             generateDict(self.dictInvalid_Mach, key)
 
         return t 
 
     def OTHERS(self, t):
+        # conteo de eventos clasificados como "otros"
         self.others += 1
         return t
 
@@ -235,10 +246,13 @@ class MessageLexer(Lexer):
                 key = 'clase_c,' + 'publica'
 
         if self.temp_msg == 'accepted':
+            # eventos aceptados por IP
             generateDict(self.dictAcc_IP, key)
         elif self.temp_msg == 'failed':
+            # eventos fallidos por IP
             generateDict(self.dictFailed_IP, key)
         else:
+            # eventos no autorizados por IP
             generateDict(self.dictInvalid_IP, key)
 
         return t
@@ -246,10 +260,13 @@ class MessageLexer(Lexer):
     def USER(self, t):
         key = t.value
         if self.temp_msg == 'accepted':
+            # eventos aceptados por usuario
             generateDict(self.dictAcc_User, key)           
         elif self.temp_msg == 'failed':
+            # eventos fallidos por usuario
             generateDict(self.dictFailed_User, key)
         else:
+            # eventos no autorizados por usuario
             generateDict(self.dictInvalid_User, key)
 
 # No debéis modificar el comportamiento de esta sección
