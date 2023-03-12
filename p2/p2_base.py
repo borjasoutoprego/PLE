@@ -52,7 +52,7 @@ class GPXParser(Parser):
 
     
     @_('ELEV_OPEN VALUE ELEV_CLOSE')
-    def s(self, p):
+    def elevation(self, p):
         try:
             self.elevation.append(float(p.VALUE))
         except ValueError:
@@ -60,7 +60,7 @@ class GPXParser(Parser):
 
     
     @_('HR_OPEN VALUE HR_CLOSE')
-    def s(self, p):
+    def hr(self, p):
         try:
             if int(p.VALUE) <= 0:
                 print(f"Valor de cadencia no válido ('{p.VALUE}') en la línea {self.lineno}")
@@ -70,7 +70,7 @@ class GPXParser(Parser):
             print(f"Valor de cadencia no válido ('{p.VALUE}') en la línea {self.lineno}") 
 
     @_('CAD_OPEN VALUE CAD_CLOSE')
-    def s(self, p):
+    def cad(self, p):
         try:
             if int(p.VALUE) <= 0:
                 print(f"Valor de cadencia no válido ('{p.VALUE}') en la línea {self.lineno}")
@@ -80,15 +80,67 @@ class GPXParser(Parser):
             print(f"Valor de cadencia no válido ('{p.VALUE}') en la línea {self.lineno}")
 
     @_('TEMP_OPEN VALUE TEMP_CLOSE')
-    def s(self, p):
+    def temp(self, p):
         try:
             self.temperature.append(float(p.VALUE))
         except ValueError:
             print(f"Valor de temperatura no válido ('{p.VALUE}') en la línea {self.lineno}")
 
-    
+    @_('OTHERS temp hr cad OTHERS')
+    def tpe(self, p):
+        pass
 
- 
+    @_('OTHERS tpe OTHERS')
+    def extensions(self, p):
+        pass
+
+    @_('TIME_OPEN VALUE TIME_CLOSE')
+    def time(self, p): ####### revisar si puede haber errores???
+        pass
+
+    @_('OTHERS LATITUDE LONGITUDE OTHERS')
+    def coords(self, p):
+        pass
+
+    @_('coords elevation time extensions OTHERS')
+    def trkpt(self, p):
+        pass
+
+    @_('NAME_OPEN VALUE NAME_CLOSE')
+    def name(self, p):
+        pass
+
+    @_('TYPE_OPEN VALUE TYPE_CLOSE')
+    def type(self, p):
+        pass
+
+    @_('TRKSEG_OPEN trkpt')
+    def trkseg(self, p):
+        pass
+    
+    @_('trkseg trkpt')
+    def trkseg(self, p):
+        pass
+    
+    @_('trkseg TRKSEG_CLOSE')
+    def trkseg(self, p):
+        pass
+
+    @_('TEXT_OPEN VALUE TEXT_CLOSE')
+    def text(self, p):
+        pass
+
+    @_('OTHERS text OTHERS')
+    def link(self, p):
+        pass
+
+    @_('OTHERS link time OTHERS')
+    def metadata(self, p):
+        pass
+
+    @_('OTHERS metadata trk OTHERS')
+    def gpx(self, p):
+        pass
 
     # No debéis modificar el comportamiento de esta sección
 if __name__ == '__main__':
