@@ -7,9 +7,9 @@ from sly import Lexer, Parser
 
 
 class GPXLexer(Lexer):
-    TOKENS = {ELEV_OPEN, ELEV_CLOSE, HR_OPEN, HR_CLOSE, CAD_OPEN, CAD_CLOSE, 
-    TEMP_OPEN, TEMP_CLOSE, NAME_OPEN, NAME_CLOSE, TYPE_OPEN, TYPE_CLOSE, LATITUDE, 
-    LONGITUDE, DATE_OPEN, DATE_CLOSE, OTHERS, VALUE}
+    TOKENS = {ELEV_OPEN, ELEV_CLOSE, HR_OPEN, HR_CLOSE, CAD_OPEN, CAD_CLOSE, TEMP_OPEN, 
+    TEMP_CLOSE, NAME_OPEN, NAME_CLOSE, TYPE_OPEN, TYPE_CLOSE, LATITUDE, LONGITUDE, DATE_OPEN, 
+    DATE_CLOSE, TRKSEG_OPEN, TRKSEG_CLOSE, TEXT_OPEN, TEXT_CLOSE, OTHERS, VALUE}
 
     ignore = ' \t'
 
@@ -29,13 +29,66 @@ class GPXLexer(Lexer):
     LONGITUDE = r'lon="\.+"'
     DATE_OPEN = r'<time>'
     DATE_CLOSE = r'</time>'
-    OTHERS = r'<.+>|<.+|.+>'
+    TRKSEG_OPEN = r'<trkseg>'
+    TRKSEG_CLOSE = r'</trkseg>'
+    TEXT_OPEN = r'<text>'
+    TEXT_CLOSE = r'</text>'
+    OTHERS = r'<.+>|<.*|.*>'
     VALUE = r'.+'
+
+    ignore_newline = r'(\r?\n)+'
     
 
 
 class GPXParser(Parser):
     tokens = GPXLexer.tokens
+
+    def __init__(self):
+        self.names = {}
+        self.elevation = []
+        self.heart_rate = []
+        self.cadence = []
+        self.temperature = []
+
+    
+    @_('ELEV_OPEN VALUE ELEV_CLOSE')
+    def s(self, p):
+        try:
+            self.elevation.append(float(p.VALUE))
+        except ValueError:
+            print(f"Valor de elevación no válido ('{p.VALUE}') en la línea {self.lineno}")
+
+    
+    @_('HR_OPEN VALUE HR_CLOSE')
+    def s(self, p):
+        try:
+            if int(p.VALUE) <= 0:
+                print(f"Valor de cadencia no válido ('{p.VALUE}') en la línea {self.lineno}")
+            else:
+                self.heart_rate.append(int(p.VALUE))
+        except ValueError:
+            print(f"Valor de cadencia no válido ('{p.VALUE}') en la línea {self.lineno}") 
+
+    @_('CAD_OPEN VALUE CAD_CLOSE')
+    def s(self, p):
+        try:
+            if int(p.VALUE) <= 0:
+                print(f"Valor de cadencia no válido ('{p.VALUE}') en la línea {self.lineno}")
+            else:
+                self.cadence.append(int(p.VALUE))
+        except ValueError:
+            print(f"Valor de cadencia no válido ('{p.VALUE}') en la línea {self.lineno}")
+
+    @_('TEMP_OPEN VALUE TEMP_CLOSE')
+    def s(self, p):
+        try:
+            self.temperature.append(float(p.VALUE))
+        except ValueError:
+            print(f"Valor de temperatura no válido ('{p.VALUE}') en la línea {self.lineno}")
+
+    
+
+ 
 
     # No debéis modificar el comportamiento de esta sección
 if __name__ == '__main__':
