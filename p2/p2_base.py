@@ -81,10 +81,16 @@ class GPXParser(Parser):
         self.heart_rate = []
         self.cadence = []
         self.temperature = []
+        self.JSON = dict()
         # self.elevation = {'count': 0, 'min': 0, 'max': 0, 'sum': 0}
         # self.heart_rate = {'count': 0, 'min': 0, 'max': 0, 'sum': 0}
         # self.cadence = {'count': 0, 'min': 0, 'max': 0, 'sum': 0}
         # self.temperature = {'count': 0, 'min': 0, 'max': 0, 'sum': 0}
+        # self.JSON["elevation"] = self.elevation
+        # self.JSON["heart_rate"] = self.heart_rate
+        # self.JSON["cadence"] = self.cadence
+        # self.JSON["temperature"] = self.temperature
+        self.JSON["errors"] = []
         
     @_('GPX_OPEN TRK_OPEN trk_content TRK_CLOSE GPX_CLOSE')
     def gpx(self, p):
@@ -92,22 +98,22 @@ class GPXParser(Parser):
 
     @_('error TRK_OPEN trk_content TRK_CLOSE GPX_CLOSE')
     def gpx(self, p):
-        print('Error: Falta la etiqueta de apertura de </gpx>')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </gpx> en la línea {p.error.lineno}')
         return p.trk_content
 
     @_('GPX_OPEN TRK_OPEN trk_content TRK_CLOSE error')
     def gpx(self, p):
-        print('Error: Falta la etiqueta de cierre de <gpx>')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <gpx> en la línea {p.error.lineno}')
         return p.trk_content
 
     @_('GPX_OPEN error trk_content TRK_CLOSE GPX_CLOSE')
     def gpx(self, p):
-        print('Error: Falta la etiqueta de apertura de </trk>')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </trk> en la línea {p.error.lineno}')
         return p.trk_content
 
     @_('GPX_OPEN TRK_OPEN trk_content error GPX_CLOSE')
     def gpx(self, p):
-        print('Error: Falta la etiqueta de cierre de <trk>')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <trk> en la línea {p.error.lineno}')
         return p.trk_content
 
     @_('trk_content trk_item')
@@ -121,39 +127,45 @@ class GPXParser(Parser):
 
     @_('NAME_OPEN STRING NAME_CLOSE')
     def trk_item(self, p):
+        self.JSON["name"] = p.STRING
         return p.STRING
 
     @_('NAME_OPEN STRING error')
     def trk_item(self, p):
-        print('Error: Falta la etiqueta de cierre de <name>')
+        self.JSON["name"] = p.STRING
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <name> en la línea {p.error.lineno}')
         return p.STRING
 
     @_('error STRING NAME_CLOSE')
     def trk_item(self, p):
-        print('Error: Falta la etiqueta de apertura de </name>')
+        self.JSON["name"] = p.STRING
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </name> en la línea {p.error.lineno}')
         return p.STRING
 
     @_('NAME_OPEN error NAME_CLOSE')
     def trk_item(self, p):
-        print(f"Valor de name no válido ('{p.error.value}') en la línea {p.error.lineno}")
+        self.JSON["errors"].append(f"Valor de name no válido ('{p.error.value}') en la línea {p.error.lineno}")
 
     @_('TYPE_OPEN STRING TYPE_CLOSE')
     def trk_item(self, p):
+        self.JSON["type"] = p.STRING
         return p.STRING
 
     @_('error STRING TYPE_CLOSE')
     def trk_item(self, p):
-        print('Error: Falta la etiqueta de apertura de </type>')
+        self.JSON["type"] = p.STRING
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </type> en la línea {p.error.lineno}')
         return p.STRING
 
     @_('TYPE_OPEN STRING error')
     def trk_item(self, p):
-        print('Error: Falta la etiqueta de cierre de <type>')
+        self.JSON["type"] = p.STRING
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <type> en la línea {p.error.lineno}')
         return p.STRING
 
     @_('TYPE_OPEN error TYPE_CLOSE')
     def trk_item(self, p):
-        print(f"Valor de type no válido ('{p.error.value}') en la línea {p.error.lineno}")
+        self.JSON["errors"].append(f"Valor de type no válido ('{p.error.value}') en la línea {p.error.lineno}")
 
     @_('TRKSEG_OPEN trkpoints TRKSEG_CLOSE')
     def trk_item(self, p):
@@ -161,12 +173,12 @@ class GPXParser(Parser):
 
     @_('error trkpoints TRKSEG_CLOSE')
     def trk_item(self, p):
-        print('Error: Falta la etiqueta de apertura de </trkseg>')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </trkseg> en la línea {p.error.lineno}')
         return p.trkpoints
 
     @_('TRKSEG_OPEN trkpoints error')
     def trk_item(self, p):
-        print('Error: Falta la etiqueta de cierre de <trkseg>')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <trkseg> en la línea {p.error.lineno}')
         return p.trkpoints
 
     @_('trkpoints trkpt')
@@ -190,7 +202,7 @@ class GPXParser(Parser):
         coords = p.TRKPT_OPEN.split('"')
         p.trkpt_content.append(coords[1])
         p.trkpt_content.append(coords[3])
-        print('Error: Falta la etiqueta de apertura de </trkpt>')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </trkpt> en la línea {p.error.lineno}')
         return p.trkpt_content 
 
     @_('TRKPT_OPEN trkpt_content error')
@@ -198,7 +210,7 @@ class GPXParser(Parser):
         coords = p.TRKPT_OPEN.split('"')
         p.trkpt_content.append(coords[1])
         p.trkpt_content.append(coords[3])
-        print('Error: Falta la etiqueta de cierre de <trkpt>')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <trkpt> en la línea {p.error.lineno}')
         return p.trkpt_content 
 
     @_('trkpt_content trkpt_item')
@@ -222,7 +234,7 @@ class GPXParser(Parser):
 
     @_('ELEV_OPEN error ELEV_CLOSE')
     def trkpt_item(self, p):
-        print(f"Valor de elevación no válido ('{p.error.value}') en la línea {p.error.lineno}")
+        self.JSON["errors"].append(f"Valor de elevación no válido ('{p.error.value}') en la línea {p.error.lineno}")
 
     @_('TIME_OPEN DATE TIME_CLOSE')
     def trkpt_item(self, p):
@@ -230,7 +242,7 @@ class GPXParser(Parser):
 
     @_('TIME_OPEN error TIME_CLOSE')
     def trkpt_item(self, p):
-        print(f"Valor de fecha no válido ('{p.error.value}') en la línea {p.error.lineno}")
+        self.JSON["errors"].append(f"Valor de fecha no válido ('{p.error.value}') en la línea {p.error.lineno}")
 
     @_('EXTENSIONS_OPEN TPE_OPEN tpe_content TPE_CLOSE EXTENSIONS_CLOSE')
     def trkpt_item(self, p):
@@ -238,22 +250,22 @@ class GPXParser(Parser):
 
     @_('error TPE_OPEN tpe_content TPE_CLOSE EXTENSIONS_CLOSE')
     def trkpt_item(self, p):
-        print('Error: Falta la etiqueta de apertura de </extensions>')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </extensions> en la línea {p.error.lineno}')
         return p.tpe_content
 
     @_('EXTENSIONS_OPEN TPE_OPEN tpe_content TPE_CLOSE error')
     def trkpt_item(self, p):
-        print('Error: Falta la etiqueta de cierre de <extensions>')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <extensions> en la línea {p.error.lineno}')
         return p.tpe_content
 
     @_('EXTENSIONS_OPEN error tpe_content TPE_CLOSE EXTENSIONS_CLOSE')
     def trkpt_item(self, p):
-        print('Error: Falta la etiqueta de apertura de </ns3:TrackPointExtension>')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </ns3:TrackPointExtension> en la línea {p.error.lineno}')
         return p.tpe_content
 
     @_('EXTENSIONS_OPEN TPE_OPEN tpe_content error EXTENSIONS_CLOSE')
     def trkpt_item(self, p):
-        print('Error: Falta la etiqueta de cierre de <ns3:TrackPointExtension>')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <ns3:TrackPointExtension> en la línea {p.error.lineno}')
         return p.tpe_content
 
     @_('tpe_content tpe_item')
@@ -273,13 +285,13 @@ class GPXParser(Parser):
     @_('error FLOAT TEMP_CLOSE')
     def tpe_item(self, p):
         self.temperature.append(p.FLOAT)
-        print('Error: Falta la etiqueta de apertura de </ns3:atemp>')
+        self.JSON["errors"].append('Error: Falta la etiqueta de apertura de </ns3:atemp> en la línea {p.error.lineno}')
         return p.FLOAT
 
     @_('TEMP_OPEN FLOAT error')
     def tpe_item(self, p):
         self.temperature.append(p.FLOAT)
-        print('Error: Falta la etiqueta de cierre de <ns3:atemp>')
+        self.JSON["errors"].append('Error: Falta la etiqueta de cierre de <ns3:atemp> en la línea {p.error.lineno}')
         return p.FLOAT
 
     @_('TEMP_OPEN INT TEMP_CLOSE')
@@ -290,13 +302,13 @@ class GPXParser(Parser):
     @_('error INT TEMP_CLOSE')
     def tpe_item(self, p):
         self.temperature.append(p.INT)
-        print('Error: Falta la etiqueta de apertura de </ns3:atemp>')
+        self.JSON["erros"].append('Error: Falta la etiqueta de apertura de </ns3:atemp> en la línea {p.error.lineno}')
         return p.INT
 
     @_('TEMP_OPEN INT error')
     def tpe_item(self, p):
         self.temperature.append(p.INT)
-        print('Error: Falta la etiqueta de cierre de <ns3:atemp>')
+        self.JSON["errors"].append('Error: Falta la etiqueta de cierre de <ns3:atemp> en la línea {p.error.lineno}')
         return p.INT
 
     @_('TEMP_OPEN NEGATIVE_NUMBER TEMP_CLOSE')
@@ -307,18 +319,18 @@ class GPXParser(Parser):
     @_('error NEGATIVE_NUMBER TEMP_CLOSE')
     def tpe_item(self, p):
         self.temperature.append(p.INT)
-        print('Error: Falta la etiqueta de apertura de </ns3:atemp>')
+        self.JSON["errors"].append('Error: Falta la etiqueta de apertura de </ns3:atemp> en la línea {p.error.lineno}')
         return p.NEGATIVE_NUMBER
 
     @_('TEMP_OPEN NEGATIVE_NUMBER error')
     def tpe_item(self, p):
         self.temperature.append(p.INT)
-        print('Error: Falta la etiqueta de cierre de <ns3:atemp>')
+        self.JSON["errors"].append('Error: Falta la etiqueta de cierre de <ns3:atemp> en la línea {p.error.lineno}')
         return p.NEGATIVE_NUMBER
 
     @_('TEMP_OPEN error TEMP_CLOSE')
     def tpe_item(self, p):
-        print(f"Valor de temperatura no válido ('{p.error.value}') en la línea {p.error.lineno}")
+        self.JSON["errors"].append(f"Valor de temperatura no válido ('{p.error.value}') en la línea {p.error.lineno}")
 
     @_('HR_OPEN INT HR_CLOSE')
     def tpe_item(self, p):
@@ -328,18 +340,18 @@ class GPXParser(Parser):
     @_('error INT HR_CLOSE')
     def tpe_item(self, p):
         self.heart_rate.append(p.INT)
-        print('Error: Falta la etiqueta de apertura de </ns3:hr>')
+        self.JSON["errors"].append('Error: Falta la etiqueta de apertura de </ns3:hr> en la línea {p.error.lineno}')
         return p.INT
 
     @_('HR_OPEN INT error')
     def tpe_item(self, p):
         self.heart_rate.append(p.INT)
-        print('Error: Falta la etiqueta de cierre de <ns3:hr>')
+        self.JSON["errors"].append('Error: Falta la etiqueta de cierre de <ns3:hr> en la línea {p.error.lineno}')
         return p.INT
 
     @_('HR_OPEN error HR_CLOSE')
     def tpe_item(self, p):
-        print(f"Valor de ritmo cardíaco no válido ('{p.error.value}') en la línea {p.error.lineno}")
+        self.JSON["errors"].append(f"Valor de ritmo cardíaco no válido ('{p.error.value}') en la línea {p.error.lineno}")
 
     @_('CAD_OPEN INT CAD_CLOSE')
     def tpe_item(self, p):
@@ -349,18 +361,18 @@ class GPXParser(Parser):
     @_('error INT CAD_CLOSE')
     def tpe_item(self, p):
         self.cadence.append(p.INT)
-        print('Error: Falta la etiqueta de apertura de </cadence>')
+        self.JSON["errors"].append('Error: Falta la etiqueta de apertura de </cadence> en la línea {p.error.lineno}')
         return p.INT
     
     @_('CAD_OPEN INT error')
     def tpe_item(self, p):
         self.cadence.append(p.INT)
-        print('Error: Falta la etiqueta de cierre de <cadence>')
+        self.JSON["errors"].append('Error: Falta la etiqueta de cierre de <cadence> en la línea {p.error.lineno}')
         return p.INT
 
     @_('CAD_OPEN error CAD_CLOSE')
     def tpe_item(self, p):
-        print(f"Valor de cadencia no válido ('{p.error.value}') en la línea {p.error.lineno}")
+        self.JSON["errors"].append(f"Valor de cadencia no válido ('{p.error.value}') en la línea {p.error.lineno}")
 
 # json.dumps()
 # ensure_ascii = False
