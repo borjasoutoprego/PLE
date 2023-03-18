@@ -117,7 +117,7 @@ class GPXParser(Parser):
     def gpx(self, p):
         for key in ["elevation", "heart-rate", "cadence", "temperature"]:
             self.JSON["stats"][key].pop("sum", None)
-        print(json.dumps(self.JSON, indent=4, ensure_ascii=True)) #, skipkeys=filter_func))
+        print(json.dumps(self.JSON, indent=4, ensure_ascii=True))
         return p.trk_content
 
     @_('error TRK_OPEN trk_content TRK_CLOSE GPX_CLOSE')
@@ -368,14 +368,14 @@ class GPXParser(Parser):
     @_('error FLOAT TEMP_CLOSE')
     def tpe_item(self, p):
         measures(self.temperature, p.FLOAT)
-        self.JSON["errors"].append('Error: Falta la etiqueta de apertura de </ns3:atemp> en la linea {p.error.lineno}')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </ns3:atemp> en la linea {p.error.lineno}')
         self.trackpoints["temperature"] = p.FLOAT
         return p.FLOAT
 
     @_('TEMP_OPEN FLOAT error')
     def tpe_item(self, p):
         measures(self.temperature, p.FLOAT)
-        self.JSON["errors"].append('Error: Falta la etiqueta de cierre de <ns3:atemp> en la linea {p.error.lineno}')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <ns3:atemp> en la linea {p.error.lineno}')
         self.trackpoints["temperature"] = p.FLOAT
         return p.FLOAT
 
@@ -388,14 +388,14 @@ class GPXParser(Parser):
     @_('error INT TEMP_CLOSE')
     def tpe_item(self, p):
         measures(self.temperature, p.INT)
-        self.JSON["erros"].append('Error: Falta la etiqueta de apertura de </ns3:atemp> en la linea {p.error.lineno}')
+        self.JSON["erros"].append(f'Error: Falta la etiqueta de apertura de </ns3:atemp> en la linea {p.error.lineno}')
         self.trackpoints["temperature"] = p.INT
         return p.INT
 
     @_('TEMP_OPEN INT error')
     def tpe_item(self, p):
         measures(self.temperature, p.INT)
-        self.JSON["errors"].append('Error: Falta la etiqueta de cierre de <ns3:atemp> en la linea {p.error.lineno}')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <ns3:atemp> en la linea {p.error.lineno}')
         self.trackpoints["temperature"] = p.INT
         return p.INT
 
@@ -408,14 +408,14 @@ class GPXParser(Parser):
     @_('error NEGATIVE_NUMBER TEMP_CLOSE')
     def tpe_item(self, p):
         measures(self.temperature, p.NEGATIVE_NUMBER)
-        self.JSON["errors"].append('Error: Falta la etiqueta de apertura de </ns3:atemp> en la linea {p.error.lineno}')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </ns3:atemp> en la linea {p.error.lineno}')
         self.track_positions["temperature"] = p.NEGATIVE_NUMBER
         return p.NEGATIVE_NUMBER
 
     @_('TEMP_OPEN NEGATIVE_NUMBER error')
     def tpe_item(self, p):
         measures(self.temperature, p.NEGATIVE_NUMBER)
-        self.JSON["errors"].append('Error: Falta la etiqueta de cierre de <ns3:atemp> en la linea {p.error.lineno}')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <ns3:atemp> en la linea {p.error.lineno}')
         self.trackpoints["temperature"] = p.NEGATIVE_NUMBER
         return p.NEGATIVE_NUMBER
 
@@ -432,14 +432,14 @@ class GPXParser(Parser):
     @_('error INT HR_CLOSE')
     def tpe_item(self, p):
         measures(self.heart_rate, p.INT)
-        self.JSON["errors"].append('Error: Falta la etiqueta de apertura de </ns3:hr> en la linea {p.error.lineno}')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </ns3:hr> en la linea {p.error.lineno}')
         self.trackpoints["heart-rate"] = p.INT
         return p.INT
 
     @_('HR_OPEN INT error')
     def tpe_item(self, p):
         measures(self.heart_rate, p.INT)
-        self.JSON["errors"].append('Error: Falta la etiqueta de cierre de <ns3:hr> en la linea {p.error.lineno}')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <ns3:hr> en la linea {p.error.lineno}')
         self.trackpoints["heart-rate"] = p.INT
         return p.INT
 
@@ -456,14 +456,14 @@ class GPXParser(Parser):
     @_('error INT CAD_CLOSE')
     def tpe_item(self, p):
         measures(self.cadence, p.INT)
-        self.JSON["errors"].append('Error: Falta la etiqueta de apertura de </cadence> en la linea {p.error.lineno}')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </cadence> en la linea {p.error.lineno}')
         self.trackpoints["cadence"] = p.INT
         return p.INT
     
     @_('CAD_OPEN INT error')
     def tpe_item(self, p):
         measures(self.cadence, p.INT)
-        self.JSON["errors"].append('Error: Falta la etiqueta de cierre de <cadence> en la linea {p.error.lineno}')
+        self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <cadence> en la linea {p.error.lineno}')
         self.trackpoints["cadence"] = p.INT
         return p.INT
 
