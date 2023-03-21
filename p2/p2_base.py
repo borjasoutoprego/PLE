@@ -17,6 +17,16 @@ def measures(dictName, value):
     if value > dictName["max"]:
         dictName["max"] = value
 
+def coords(self, p):
+    coords = p.TRKPT_OPEN.split('"')
+    p.trkpt_content.append(coords[1])
+    p.trkpt_content.append(coords[3])
+    self.trackpoints["latitude"] = coords[1]
+    self.trackpoints["longitude"] = coords[3]
+    trackpoints = self.trackpoints.copy()
+    self.JSON["trackpoints"].append(trackpoints)
+    self.trackpoints.clear()
+
 class GPXLexer(Lexer):
     """Clase Lexer que define los tokens del lenguaje GPX"""
 
@@ -219,39 +229,18 @@ class GPXParser(Parser):
 
     @_('TRKPT_OPEN trkpt_content TRKPT_CLOSE')
     def trkpt(self, p):
-        coords = p.TRKPT_OPEN.split('"')
-        p.trkpt_content.append(coords[1])
-        p.trkpt_content.append(coords[3])
-        self.trackpoints["latitude"] = coords[1]
-        self.trackpoints["longitude"] = coords[3]
-        trackpoints = self.trackpoints.copy()
-        self.JSON["trackpoints"].append(trackpoints)
-        self.trackpoints.clear()
+        coords(self, p)
         return p.trkpt_content
 
     @_('error trkpt_content TRKPT_CLOSE')
     def trkpt(self, p):
-        coords = p.TRKPT_OPEN.split('"')
-        p.trkpt_content.append(coords[1])
-        p.trkpt_content.append(coords[3])
-        self.trackpoints["latitude"] = coords[1]
-        self.trackpoints["longitude"] = coords[3]
-        trackpoints = self.trackpoints.copy()
-        self.JSON["trackpoints"].append(trackpoints)
-        self.trackpoints.clear()
+        coords(self, p)
         self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </trkpt> en la linea {p.error.lineno}')
         return p.trkpt_content
 
     @_('TRKPT_OPEN trkpt_content error')
     def trkpt(self, p):
-        coords = p.TRKPT_OPEN.split('"')
-        p.trkpt_content.append(coords[1])
-        p.trkpt_content.append(coords[3])
-        self.trackpoints["latitude"] = coords[1]
-        self.trackpoints["longitude"] = coords[3]
-        trackpoints = self.trackpoints.copy()
-        self.JSON["trackpoints"].append(trackpoints)
-        self.trackpoints.clear()
+        coors(self, p)
         self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <trkpt> en la linea {p.error.lineno}')
         return p.trkpt_content
 
