@@ -75,7 +75,10 @@ class GPXLexer(Lexer):
         return t
 
     def NEGATIVE_NUMBER(self, t):
-        t.value = int(t.value)
+        if '.' in t.value:
+            t.value = float(t.value)
+        else:
+            t.value = int(t.value)
         return t
 
     def STRING(self, t):
