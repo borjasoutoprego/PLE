@@ -208,11 +208,6 @@ class GPXParser(Parser):
     def trk_item(self, p):
         return p.trkpoints
 
-    # @_('TRKSEG_OPEN trkpoints error')
-    # def trk_item(self, p):
-    #     self.JSON["errors"].append(f'Error: Falta la etiqueta de cierre de <trkseg> en la linea {p.error.lineno}')
-    #     return p.trkpoints
-
     @_('error trkpoints TRKSEG_CLOSE')
     def trk_item(self, p):
         self.JSON["errors"].append(f'Error: Falta la etiqueta de apertura de </trkseg> en la linea {p.error.lineno}')
