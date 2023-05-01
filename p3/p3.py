@@ -19,6 +19,7 @@ dev_path = str(sys.argv[4])
 test_path = str(sys.argv[5])
 
 class txtReader:
+    """Reads a txt file and returns a list of lists with the words and a list of lists with the ids of the words"""
     def __init__(self, filename):
         self.filename = filename
 
@@ -45,6 +46,7 @@ class txtReader:
         return text, text_id
 
 class alphabet:
+    """Creates a dictionary with the words and their ids"""
     def __init__(self, train_file, dev_file, test_file):
         self.train_file = train_file
         self.dev_file = dev_file
@@ -53,6 +55,7 @@ class alphabet:
         self.labels = dict()
 
     def read_split(self):
+        """Reads the files and returns a list of lists with the words and a list of lists with the ids of the words"""
         text_files = []
         for text_file in [self.train_file, self.dev_file, self.test_file]:
             txt = txtReader(text_file)
@@ -63,6 +66,7 @@ class alphabet:
         return text_files[0], text_files[1], text_files[2], text_files[3], text_files[4], text_files[5]
     
     def _tagger(self, dataset, cnt, dictionary):
+        """Creates a dictionary with the words and their ids"""
         for i in dataset: # i es una frase
             for j in i: # j es una palabra
                 pos = i.index(j) # pos es la posicion de la palabra en la frase
@@ -76,6 +80,7 @@ class alphabet:
         return dataset, cnt, dictionary 
 
     def labelEncoder(self):
+        """Creates a dictionary with the labels and their ids"""
         train, train_id, dev, dev_id, test, test_id = self.read_split()
         cnt = 1
         cnt_id = 0
@@ -110,7 +115,8 @@ class alphabet:
         return train, train_id, dev, dev_id, test, test_id, self.data, self.labels
 
 class FFTagger():
-    def __init__(self, train, train_id, dev, dev_id, test, test_id, labels_dict, n, loss, optimizer, metrics, batch_size, epochs): # weighted_metrics
+    """Class that implements a Feed Fordward tagger"""
+    def __init__(self, train, train_id, dev, dev_id, test, test_id, labels_dict, n, loss, optimizer, metrics, batch_size, epochs): 
         self.model = Sequential()
         self.train = train
         self.train_id = train_id
@@ -129,7 +135,6 @@ class FFTagger():
         self.loss = loss
         self.optimizer = optimizer
         self.metrics = metrics
-        # self.weighted_metrics = weighted_metrics
         self.train_windows = []
         self.dev_windows = []
         self.test_windows = []
@@ -137,6 +142,7 @@ class FFTagger():
         self.epochs = epochs
 
     def build_model(self): 
+        """Builds the model"""
         self.model.add(Input(shape=(self.n*2+1,), dtype=tf.int32))
         self.model.add(Embedding(input_dim = self.vocab_size, output_dim=20, mask_zero=True, input_length=self.n*2+1))
         self.model.add(Flatten())
@@ -144,6 +150,7 @@ class FFTagger():
         self.model.add(Dense(self.num_classes, activation='softmax'))
 
     def train_model(self):
+        """Trains the model"""
         # Añadimos padding a las frases y las dividimos en ventanas de tamaño 2n+1
         padding = []
         for i in range(self.n):
@@ -185,6 +192,7 @@ class FFTagger():
         self.model.fit(train_tensor, epochs=self.epochs, validation_data=dev_tensor, verbose=1)
 
     def evaluate_model(self, task):
+        """Evaluates the model"""
         padding = []
         for i in range(self.n):
             padding.append(0)
@@ -287,6 +295,7 @@ class FFTagger():
             return "Task not found"
 
 class LSTMTagger():
+    """Class that implements a LSTM tagger"""
     def __init__(self, train, train_id, dev, dev_id, test, test_id, data_dict, labels_dict, loss, optimizer, metrics, batch_size, epochs):
         self.model = Sequential()
         self.train = train
@@ -317,6 +326,7 @@ class LSTMTagger():
         self.epochs = epochs
 
     def build_model(self, bidirectional=False):
+        """Builds the model"""
         self.model.add(Embedding(input_dim=self.vocab_size, output_dim=20, mask_zero=True, input_length=self.maxlen))
         if bidirectional:
             self.model.add(Bidirectional(LSTM(64, return_sequences=True)))
@@ -325,21 +335,21 @@ class LSTMTagger():
         self.model.add(TimeDistributed(Dense(units=self.num_classes, activation='softmax'))) 
 
     def _getMaxLength(self, data):
+        """Gets the maximum length of the sentences in the dataset"""
         for i in range(len(data)):
             if len(data[i]) > self.maxlen:
                 self.maxlen = len(data[i])
         
     def _padder(self, data, data_id):
-        # Obtenemos la longitud de la oración más larga
-
+        """Pads the sentences to the maximum length"""
         padded_data = pad_sequences(data, maxlen=self.maxlen, padding='post')
         padded_data_id = pad_sequences(data_id, maxlen=self.maxlen, padding='post')
         one_hot_data_id = to_categorical(padded_data_id, num_classes=self.num_classes)
 
         return padded_data, one_hot_data_id
-          
 
     def preprocessing(self):
+        """Pads the sentences to the maximum length and converts the labels to one-hot vectors"""
         self._getMaxLength(self.train)
         self._getMaxLength(self.dev)
         self._getMaxLength(self.test)
@@ -356,6 +366,7 @@ class LSTMTagger():
         self.test_windows, self.test_windows_id = datasets[2]
 
     def train_model(self):
+        """Trains the model"""
         train_tensor = tf.data.Dataset.from_tensor_slices((self.train_windows, self.train_windows_id))
         train_tensor = train_tensor.batch(self.batch_size)
         dev_tensor = tf.data.Dataset.from_tensor_slices((self.dev_windows, self.dev_windows_id))
@@ -365,6 +376,7 @@ class LSTMTagger():
         self.model.fit(train_tensor, epochs=self.epochs, validation_data=dev_tensor)
 
     def evaluate_model(self, task):
+        """Evaluates the model"""
         test_labels = [] # lista que almacena las etiquetas de los elementos de self.test_id
         # Cambiamos las etiquetas de numérico a string
         for i in self.test_id:
