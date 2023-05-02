@@ -17,6 +17,8 @@ task = str(sys.argv[2])
 train_path = str(sys.argv[3])
 dev_path = str(sys.argv[4])
 test_path = str(sys.argv[5])
+batch_size = int(sys.argv[6])
+epochs = int(sys.argv[7])
 
 class txtReader:
     """Reads a txt file and returns a list of lists with the words and a list of lists with the ids of the words"""
@@ -219,32 +221,20 @@ class FFTagger():
                         temp_phrase.append(k)
             test_labels.append(temp_phrase)
             test_labels_length.append(len(temp_phrase))
-        
-        one_hot_dict = dict() # Almacena la correspondencia entre one hot (valor) y etiqueta numérica (clave)
-        pos_one_hot = 0
-        for i in self.test_id:
-            for j in range(len(i)):
-                if i[j] not in one_hot_dict:
-                    one_hot_dict[i[j]] = np.argmax(one_hot_test_id[pos_one_hot]) # devuelve el índice del elemento con valor 1 en one_hot_test_id[i]
-                pos_one_hot += 1
 
         test_tensor = tf.data.Dataset.from_tensor_slices((self.test_windows, one_hot_test_id))
         test_tensor = test_tensor.batch(self.batch_size)
         
         if task == "PoS":
             loss, accuracy = self.model.evaluate(test_tensor, verbose=1)
-            return loss, accuracy
+            print("Loss: ", loss, '\nAccuracy: ', accuracy)
+            # return loss, accuracy
         elif task == "NER":
             loss, accuracy = self.model.evaluate(test_tensor, verbose=1)
             pred = self.model.predict(test_tensor).astype(np.float32)
 
             # para cada elemento de pred obtenemos la etiqueta numérica  
-            predictions = []
-            for p in pred:
-                pos = np.argmax(p)
-                for k, v in one_hot_dict.items():
-                    if pos == v:
-                        predictions.append(k)
+            predictions = np.argmax(pred, axis=-1)
             
             # convertimos las etiquetas numéricas a etiquetas de texto
             pred_labels = []
@@ -290,7 +280,9 @@ class FFTagger():
             evaluator = Evaluator(test_labels, pred=pred_labels, tags=evaluator_tags, loader="list")
             results, results_by_tag = evaluator.evaluate()
             
-            return loss, accuracy, results, results_by_tag
+            # return loss, accuracy, results, results_by_tag
+            print('Loss: ', loss, '\nAccuracy: ', accuracy, '\nResults: ', results, '\nResults by tag: ', results_by_tag, '\n')
+
         else:
             return "Task not found"
 
@@ -391,42 +383,28 @@ class LSTMTagger():
         for t in self.test_id:
             lengths.append(len(t))
 
-        one_hot_dict = dict()
-        cnt_test_id = 0
-        for w in self.test_windows_id:
-            for i in range(len(w)):
-                if np.argmax(w[i]) not in one_hot_dict:
-                    one_hot_dict[np.argmax(w[i])] = self.test_id[cnt_test_id] # clave es el índice del elemento con valor 1 en one_hot_test_id[i], valor es el elemento de self.test_id -> al reves que en FFTagger
-                    cnt_test_id += 1
-
         test_tensor = tf.data.Dataset.from_tensor_slices((self.test_windows, self.test_windows_id))
         test_tensor = test_tensor.batch(self.batch_size)
         
         if task == "PoS":
             loss, accuracy = self.model.evaluate(test_tensor, verbose=1)
-            return loss, accuracy
+            # return loss, accuracy
+            print("Loss: ", loss, '\nAccuracy: ', accuracy)
         elif task == "NER":
             loss, accuracy = self.model.evaluate(test_tensor, verbose=1)
             pred = self.model.predict(test_tensor).astype(np.float32)
 
-            pred_wo_padding = []
-            for p in range(len(pred)):
-                pred_wo_padding.append(pred[p][:lengths[p]])
-            
             # convertimos las predicciones a etiquetas numéricas
-            predictions = []
-            for phrase in pred_wo_padding:
-                temp_phrase = []
-                for i in range(len(phrase)):
-                    pos = np.argmax(phrase[i])
-                    for k, v in one_hot_dict.items():
-                        if pos == k:
-                            temp_phrase.append(v)
-                predictions.append(temp_phrase)
+            pred_ids = np.argmax(pred, axis=-1)
+
+            pred_wo_padding = []
+            for p in range(len(pred_ids)):
+                index = lengths[p]
+                pred_wo_padding.append(pred_ids[p][:index])
 
             # convertimos las etiquetas numéricas a etiquetas de texto
             pred_labels = []
-            for l in predictions:
+            for l in pred_wo_padding:
                 tmp_phrase = []
                 for w in l:
                     for k, v in self.labels_dict.items():
@@ -465,7 +443,8 @@ class LSTMTagger():
             evaluator = Evaluator(test_labels, pred=pred_labels, tags=evaluator_tags, loader="list")
             results, results_by_tag = evaluator.evaluate()
             
-            return loss, accuracy, results, results_by_tag
+            # return loss, accuracy, results, results_by_tag
+            print('Loss: ', loss, '\nAccuracy: ', accuracy, '\nResults: ', results, '\nResults by tag: ', results_by_tag, '\n')
         else:
             return "Task not found"
 
@@ -474,38 +453,25 @@ if __name__=="__main__":
     train, train_id, dev, dev_id, test, test_id, data, labels = alphabet(train_path, dev_path, test_path).labelEncoder()
 
     if model_type == "ff":
-        model = FFTagger(train, train_id, dev, dev_id, test, test_id,  labels, 2, 'categorical_crossentropy', 'adam', ['accuracy'], 32, 10)
+        model = FFTagger(train, train_id, dev, dev_id, test, test_id,  labels, 2, 'categorical_crossentropy', 'adam', ['accuracy'], batch_size, epochs)
         model.build_model()
         model.train_model()
-        if task == "PoS":
-            model.evaluate_model("PoS")
-        elif task == "NER":
-            model.evaluate_model("NER")
-        else:
-            print("Task not found")
+        model.evaluate_model(task)
+
     elif model_type == "lstm":
-        model = LSTMTagger(train, train_id, dev, dev_id, test, test_id, data, labels, 'categorical_crossentropy', 'adam', ['accuracy'], 32, 50)
+        model = LSTMTagger(train, train_id, dev, dev_id, test, test_id, data, labels, 'categorical_crossentropy', 'adam', ['accuracy'], batch_size, epochs)
         model.preprocessing()
         model.build_model(bidirectional=False)
         model.train_model()
-        if task == "PoS":
-            model.evaluate_model("PoS")
-        elif task == "NER":
-            model.evaluate_model("NER")
-        else:
-            print("Task not found")
+        model.evaluate_model(task)
 
     elif model_type == "bilstm":
-        model = LSTMTagger(train, train_id, dev, dev_id, test, test_id, data, labels, 'categorical_crossentropy', 'adam', ['accuracy'], 32, 50)
+        model = LSTMTagger(train, train_id, dev, dev_id, test, test_id, data, labels, 'categorical_crossentropy', 'adam', ['accuracy'], batch_size, epochs) 
         model.preprocessing()
         model.build_model(bidirectional=True)
         model.train_model()
-        if task == "PoS":
-            model.evaluate_model("PoS")
-        elif task == "NER":
-            model.evaluate_model("NER")
-        else:
-            print("Task not found")
+        model.evaluate_model(task)
+
     else:
         print("Model not found")
 
