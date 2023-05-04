@@ -228,7 +228,7 @@ class FFTagger():
         if task == "PoS":
             loss, accuracy = self.model.evaluate(test_tensor, verbose=1)
             print("Loss: ", loss, '\nAccuracy: ', accuracy)
-            # return loss, accuracy
+            
         elif task == "NER":
             loss, accuracy = self.model.evaluate(test_tensor, verbose=1)
             pred = self.model.predict(test_tensor).astype(np.float32)
@@ -280,7 +280,6 @@ class FFTagger():
             evaluator = Evaluator(test_labels, pred=pred_labels, tags=evaluator_tags, loader="list")
             results, results_by_tag = evaluator.evaluate()
             
-            # return loss, accuracy, results, results_by_tag
             print('Loss: ', loss, '\nAccuracy: ', accuracy, '\nResults: ', results, '\nResults by tag: ', results_by_tag, '\n')
 
         else:
@@ -388,7 +387,7 @@ class LSTMTagger():
         
         if task == "PoS":
             loss, accuracy = self.model.evaluate(test_tensor, verbose=1)
-            # return loss, accuracy
+            
             print("Loss: ", loss, '\nAccuracy: ', accuracy)
         elif task == "NER":
             loss, accuracy = self.model.evaluate(test_tensor, verbose=1)
@@ -443,7 +442,6 @@ class LSTMTagger():
             evaluator = Evaluator(test_labels, pred=pred_labels, tags=evaluator_tags, loader="list")
             results, results_by_tag = evaluator.evaluate()
             
-            # return loss, accuracy, results, results_by_tag
             print('Loss: ', loss, '\nAccuracy: ', accuracy, '\nResults: ', results, '\nResults by tag: ', results_by_tag, '\n')
         else:
             return "Task not found"
