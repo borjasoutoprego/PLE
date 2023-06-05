@@ -18,6 +18,8 @@ La entrada del analizador será un fichero de texto plano (auth_full.log).
 
 Diseño e implementación mediante la herramienta SLY de un analizador sintáctico para el tratamiento de ficheros GPX. El objetivo de la práctica consiste en llevar a cabo su conversión a formato JSON y, además, calcular algunos datos estadísticos básicos. 
 
+---
+
 ### Práctica 3
 
 Diseño e implementación de dos redes neuronales para resolver tareas de etiquetación morfológica (PoS tagging) y reconocimiento de entidades nombradas (named-entity recognition). En concreto, se implementan:
